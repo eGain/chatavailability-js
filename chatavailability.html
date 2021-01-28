@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <script>
+
+ 
+
+        //Environment specific parameters
+        var protocol = "http"
+        var domain = "solvev17.eng.na"
+        var portalid = "456700000001001"
+
+ 
+
+        var xhr = new XMLHttpRequest();        
+        var url = protocol+'://'+domain+'/system/ws/v15/ss/portal/'+portalid+'/authentication/anonymous'
+        var data = new FormData();    
+        xhr.open('POST', url, true);    
+        xhr.setRequestHeader('Content-type', 'application/json');
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('Accept-Language', 'en-US');
+        xhr.onload = function () {
+                // do something            
+                if (typeof(xhr.getResponseHeader("X-egain-session")) != 'undefined') {
+                    sessionStorage.setItem("egain_session_id", xhr.getResponseHeader("X-egain-session"))
+                    //alert("session_id: "+sessionStorage.egain_session_id);                    
+                }
+        };
+        if (typeof(sessionStorage.egain_session_id) == 'undefined') {
+            //alert("Sending Anonymos access")
+            xhr.send(data);
+        }    
+    </script>        
+    </head>
+    <body>
+    <form id = "myForm">
+            <label>Chat Queu Id</label>
+            <input type="text" name="chatqueueid" value="1001" />    
+            <input type="button" onclick="checkAvailability()" value="Check Availability">
+            <p id="result"></p>
+    </form>    
+    <script>
+    function checkAvailability() {
+        //alert("Trigger chat check");
+        var data = document.getElementById("myForm").elements;
+        //alert(data["portalid"].value);
+        //alert(data["chatqueueid"].value);
+        var chatqueueid = data["chatqueueid"].value
+        // submit via XHR
+        var xhr = new XMLHttpRequest();
+        var url = protocol+'://'+domain+'/system/ws/chat/entrypoint/agentAvailability/'+chatqueueid
+        xhr.open('GET', url, true);    
+        xhr.setRequestHeader('Content-type', 'application/json');
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('Accept-Language', 'en-US');    
+        xhr.setRequestHeader('X-egain-session', sessionStorage.egain_session_id);
+        //alert("session id:"+sessionStorage.egain_session_id);
+        xhr.onload = function () {
+            // do something to response
+            if (xhr.readyState === xhr.DONE && xhr.status === 200) {
+                //alert("Success");
+                sessionStorage.clear("egain_session_id");
+                var json = JSON.parse(xhr.responseText)
+                //alert("text: "+json.available);
+                if (json.available == "true") {document.getElementById("result").innerHTML = "Agent is Available"}
+                else {document.getElementById("result").innerHTML = "Agent is not Available"}
+            }
+            else {
+                //alert("Failure");
+                sessionStorage.clear("egain_session_id");                
+                //alert(xhr.responseXML);              
+            }
+        };
+        //alert("Sending Check Availability")
+        xhr.send(data);        
+    }    
+    </script>
+    </body>
+</html>
